@@ -1,7 +1,7 @@
 use crate::{
     behavior::{
         higher_order::Chain,
-        movement::{simple_steer_towards, QuickJumpAndDodge, Yielder},
+        movement::{simple_steer_towards, Wavedash, Yielder},
     },
     eeg::Drawable,
     strategy::{Action, Behavior, Context},
@@ -58,22 +58,21 @@ impl Behavior for BlitzToLocation {
             });
         }
 
-        // Should we flip?
+        // Wavedash?
         if me.OnGround
             && me.Physics.rot().pitch().to_degrees() < 1.0
-            && (900.0 <= speed && speed < 2200.0)
+            && ((900.0 <= speed || me.Boost == 0) && speed < 2200.0)
         {
-            // In theory this value should be 1.25, but leave some leeway for recovery.
-            let assumed_flip_duration = 1.75;
-            let dodge_speed = me.Physics.vel().norm() + rl::DODGE_FORWARD_IMPULSE;
-            let flip_dist = dodge_speed * assumed_flip_duration;
-            if (distance > flip_dist && steer.abs() < PI / 24.0)
-                || (distance > flip_dist * 1.5 && steer.abs() < PI / 8.0)
+            let assumed_wavedash_duration = Wavedash::estimated_duration();
+            let wavedash_speed = (speed + rl::DODGE_FORWARD_IMPULSE).max(rl::CAR_MAX_SPEED);
+            let wavedash_dist = wavedash_speed * assumed_wavedash_duration;
+            if (distance > wavedash_dist && steer.abs() < PI / 24.0)
+                || (distance > wavedash_dist * 1.5 && steer.abs() < PI / 8.0)
             {
                 return Action::tail_call(Chain::new(self.priority(), vec_box![
                     // Give a bit of time to stabilize in case we just landed.
-                    Yielder::new(0.1, Default::default()),
-                    QuickJumpAndDodge::new()
+                    Yielder::new(0.05, Default::default()),
+                    Wavedash::new()
                 ]));
             }
         }

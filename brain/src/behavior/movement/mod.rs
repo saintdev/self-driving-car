@@ -8,6 +8,7 @@ pub use self::{
     quick_jump_and_dodge::QuickJumpAndDodge,
     simple_steer_towards::{simple_steer_towards, simple_yaw_diff},
     skid_recover::SkidRecover,
+    wavedash::Wavedash,
     yielder::Yielder,
 };
 
@@ -24,4 +25,5 @@ mod simple_steer_towards;
 mod skid_recover;
 #[cfg(test)]
 mod wall_drive;
+mod wavedash;
 mod yielder;

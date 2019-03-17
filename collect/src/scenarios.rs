@@ -660,3 +660,134 @@ impl Scenario for AirRotateCounter {
         }
     }
 }
+
+pub struct Wavedash {
+    start_speed: f32,
+    phase: WavedashPhase,
+    starting_pitch: Option<f32>,
+}
+
+enum WavedashPhase {
+    Accelerate,
+    Jump(f32),
+    Adjust(f32),
+    Wait(f32),
+    Dodge(f32),
+    Land(f32),
+}
+
+impl Wavedash {
+    pub fn new(start_speed: f32) -> Self {
+        Self {
+            start_speed,
+            phase: WavedashPhase::Accelerate,
+            starting_pitch: None,
+        }
+    }
+}
+
+impl Scenario for Wavedash {
+    fn name(&self) -> String {
+        format!("wavedash_speed_{}", self.start_speed)
+    }
+
+    fn step(
+        &mut self,
+        rlbot: &rlbot::RLBot,
+        time: f32,
+        packet: &common::halfway_house::LiveDataPacket,
+    ) -> Result<ScenarioStepResult, Box<dyn Error>> {
+        let starting_pitch = *self
+            .starting_pitch
+            .get_or_insert(packet.GameCars[0].Physics.rot().pitch());
+        let pitch_delta = packet.GameCars[0].Physics.rot().pitch() - starting_pitch;
+        match self.phase {
+            WavedashPhase::Accelerate => {
+                if packet.GameCars[0].Physics.vel().norm() >= self.start_speed {
+                    self.phase = WavedashPhase::Jump(time);
+                    return self.step(rlbot, time, packet);
+                }
+
+                let input = common::halfway_house::PlayerInput {
+                    Throttle: (self.start_speed / 1000.0).min(1.0),
+                    Boost: self.start_speed > 1000.0,
+                    ..Default::default()
+                };
+                rlbot.update_player_input(0, &translate_player_input(&input))?;
+                Ok(ScenarioStepResult::Ignore)
+            }
+            WavedashPhase::Jump(start) => {
+                if time - start >= 2.0 / rl::PHYSICS_TICK_FREQ {
+                    self.phase = WavedashPhase::Adjust(time);
+                    return self.step(rlbot, time, packet);
+                }
+
+                let input = common::halfway_house::PlayerInput {
+                    Jump: true,
+                    Pitch: 1.0,
+                    Throttle: 1.0,
+                    ..Default::default()
+                };
+                rlbot.update_player_input(0, &translate_player_input(&input))?;
+                Ok(ScenarioStepResult::Write)
+            }
+            WavedashPhase::Adjust(_start) => {
+                if pitch_delta >= PI / 360.0 {
+                    self.phase = WavedashPhase::Wait(time);
+                    return self.step(rlbot, time, packet);
+                }
+
+                let input = common::halfway_house::PlayerInput {
+                    Pitch: 1.0,
+                    Throttle: 1.0,
+                    ..Default::default()
+                };
+                rlbot.update_player_input(0, &translate_player_input(&input))?;
+                Ok(ScenarioStepResult::Write)
+            }
+            WavedashPhase::Wait(_start) => {
+                if packet.GameCars[0].Physics.loc().z <= 39.0
+                    && packet.GameCars[0].Physics.vel().z < 0.0
+                {
+                    self.phase = WavedashPhase::Dodge(time);
+                    return self.step(rlbot, time, packet);
+                }
+
+                let input = common::halfway_house::PlayerInput {
+                    Throttle: 1.0,
+                    ..Default::default()
+                };
+                rlbot.update_player_input(0, &translate_player_input(&input))?;
+                Ok(ScenarioStepResult::Write)
+            }
+            WavedashPhase::Dodge(start) => {
+                if time - start >= 2.0 / rl::PHYSICS_TICK_FREQ {
+                    self.phase = WavedashPhase::Land(time);
+                    return self.step(rlbot, time, packet);
+                }
+
+                let input = common::halfway_house::PlayerInput {
+                    Pitch: -1.0,
+                    Jump: true,
+                    Handbrake: true,
+                    Throttle: 1.0,
+                    ..Default::default()
+                };
+                rlbot.update_player_input(0, &translate_player_input(&input))?;
+                Ok(ScenarioStepResult::Write)
+            }
+            WavedashPhase::Land(start) => {
+                if time - start >= 2.0 {
+                    return Ok(ScenarioStepResult::Finish);
+                }
+
+                let input = common::halfway_house::PlayerInput {
+                    Handbrake: true,
+                    ..Default::default()
+                };
+                rlbot.update_player_input(0, &translate_player_input(&input))?;
+                Ok(ScenarioStepResult::Write)
+            }
+        }
+    }
+}
