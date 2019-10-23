@@ -153,7 +153,7 @@ fn test_thread(
     eeg.show_window();
     eeg.track_events();
 
-    let mut brain = Brain::with_behavior(NullBehavior::new());
+    let mut brain = Brain::with_behavior(rlbot, NullBehavior::new());
     brain.set_player_index(0);
 
     let mut packets = rlbot.packeteer();

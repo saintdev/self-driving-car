@@ -182,5 +182,6 @@ pub fn translate_player_input(input: &PlayerInput) -> rlbot::ControllerState {
         jump: input.Jump,
         boost: input.Boost,
         handbrake: input.Handbrake,
+        ..Default::default()
     }
 }

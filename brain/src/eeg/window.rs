@@ -56,7 +56,12 @@ fn thread(rx: crossbeam_channel::Receiver<ThreadMessage>) {
         .unwrap();
     window.set_position(Position { x: 1912, y: 190 });
 
-    let path = PathBuf::from(r"C:\Windows\Fonts\calibri.ttf");
+    // FIXME: Platform agnostic font-path discovery
+    let path = if cfg!(windows) {
+        PathBuf::from(r"C:\Windows\Fonts\calibri.ttf")
+    } else {
+        PathBuf::from(r"/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf")
+    };
     let factory = window.factory.clone();
     let mut glyphs = Glyphs::new(path, factory, TextureSettings::new()).unwrap();
 

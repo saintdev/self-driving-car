@@ -41,12 +41,15 @@ pub fn to_rotation_matrix(pitch: f32, yaw: f32, roll: f32) -> Rotation3<f32> {
 mod tests {
     use super::*;
     use common::prelude::*;
+
+    #[cfg(target_family = "windows")]
     use nalgebra::Vector3;
 
     const EPS: f32 = 0.001;
 
     #[test]
     #[ignore = "I think chip's function is incorrect?"]
+    #[cfg(target_family = "windows")]
     fn same_as_chip() {
         let chip = chip::euler_rotation(&Vector3::new(0.1, 0.2, 0.3));
         let dom = to_rotation_matrix(0.1, 0.2, 0.3);

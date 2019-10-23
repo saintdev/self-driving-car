@@ -10,7 +10,7 @@ lazy_static = "1.1.0"
 nalgebra = "0.18.0"
 ncollide3d = "0.19.1"
 
-rlbot = "0.4.1"
+rlbot = "0.6.0"
 
 common = { path = "../common" }
 oven = { path = "../oven" }

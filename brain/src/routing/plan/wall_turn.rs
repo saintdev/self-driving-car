@@ -10,6 +10,9 @@ use nalgebra::Point3;
 use nameof::name_of_type;
 use std::f32::consts::PI;
 
+#[cfg(target_family = "unix")]
+use crate::helpers::drive::max_curvature;
+
 const SLOWEST_TURNING_SPEED: f32 = 900.0;
 
 #[derive(Clone)]
@@ -67,7 +70,12 @@ impl RoutePlanner for WallTurnPlanner {
         let start = ctx.start.flatten(&start_to_2d);
         let target_loc = target_to_2d * self.target_loc;
 
+        #[cfg(target_family = "windows")]
         let turn_radius = 1.0 / chip::max_curvature(start.vel.norm().max(SLOWEST_TURNING_SPEED));
+
+        #[cfg(target_family = "unix")]
+        let turn_radius = 1.0 / max_curvature(start.vel.norm().max(SLOWEST_TURNING_SPEED));
+
         let turn = match calculate_circle_turn(&start, turn_radius, target_loc)? {
             Some(x) => x,
             None => {

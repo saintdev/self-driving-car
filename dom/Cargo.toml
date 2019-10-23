@@ -7,11 +7,11 @@ edition = "2018"
 [dependencies]
 nalgebra = "0.18.0"
 
-rlbot = "0.4.1"
+rlbot = "0.6.0"
 
 common = { path = "../common" }
 
-[dev-dependencies]
+[target.'cfg(windows)'.dev-dependencies]
 chip = "0.0.6"
 
 [features]

@@ -1,7 +1,8 @@
 //! This is just a dumping ground of marginally-useful visualization stuff.
-
+#[cfg(target_family = "windows")]
 use common::prelude::*;
 
+#[cfg(target_family = "windows")]
 pub fn draw_ball_prediction(rlbot: &rlbot::RLBot, packet: &common::halfway_house::LiveDataPacket) {
     use chip::Ball;
     let mut ball = Ball::new();

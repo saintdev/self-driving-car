@@ -1,10 +1,16 @@
-use chip::Ball;
-use common::{math::fractionality, prelude::*, rl, vector_iter};
+use common::vector_iter;
 use derive_new::new;
 use nalgebra::{Point3, Vector3};
 use ordered_float::OrderedFloat;
 use std::{iter::Cloned, slice::Iter};
 
+#[cfg(target_family = "windows")]
+use {
+    chip::Ball,
+    common::{math::fractionality, prelude::*, rl},
+};
+
+#[cfg(target_family = "windows")]
 const PREDICT_DURATION: f32 = 7.0;
 
 pub struct BallTrajectory {
@@ -48,7 +54,9 @@ impl BallTrajectory {
     pub fn iter_step_by<'a>(&'a self, dt: f32) -> impl Iterator<Item = BallFrame> + 'a {
         let factor = dt / self.frames[0].dt;
         // Enforce integral divisions.
+        #[cfg(target_family = "windows")]
         assert!(fractionality(factor) <= 1e-5);
+
         let factor = factor.round();
 
         self.frames
@@ -110,8 +118,10 @@ pub trait BallPredictor {
 }
 
 #[derive(new)]
+#[cfg(target_family = "windows")]
 pub struct ChipBallPrediction;
 
+#[cfg(target_family = "windows")]
 impl BallPredictor for ChipBallPrediction {
     fn predict(&self, packet: &common::halfway_house::LiveDataPacket) -> BallTrajectory {
         const DT: f32 = rl::PHYSICS_DT;
@@ -150,11 +160,11 @@ impl BallPredictor for ChipBallPrediction {
 }
 
 #[derive(new)]
-pub struct FrameworkBallPrediction {
-    rlbot: &'static rlbot::RLBot,
+pub struct FrameworkBallPrediction<'a> {
+    rlbot: &'a rlbot::RLBot,
 }
 
-impl BallPredictor for FrameworkBallPrediction {
+impl<'a> BallPredictor for FrameworkBallPrediction<'a> {
     fn predict(&self, _packet: &common::halfway_house::LiveDataPacket) -> BallTrajectory {
         const DT: f32 = 1.0 / 60.0;
 

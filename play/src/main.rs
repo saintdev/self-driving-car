@@ -131,7 +131,7 @@ fn run_bot(
 ) {
     let field_info = wait_for_field_info(rlbot);
     let brain = match Brain::infer_game_mode(field_info) {
-        rlbot::GameMode::Soccer => Brain::soccar(),
+        rlbot::GameMode::Soccer => Brain::soccar(rlbot),
         rlbot::GameMode::Dropshot => Brain::dropshot(rlbot),
         rlbot::GameMode::Hoops => Brain::hoops(rlbot),
         mode => panic!("unexpected game mode {:?}", mode),
@@ -166,7 +166,7 @@ fn wait_for_field_info(rlbot: &rlbot::RLBot) -> rlbot::flat::FieldInfo<'_> {
     }
 }
 
-fn bot_loop(rlbot: &rlbot::RLBot, player_index: i32, bot: &mut FormulaNone<'_>) {
+fn bot_loop(rlbot: &rlbot::RLBot, player_index: i32, bot: &mut FormulaNone<'_, '_>) {
     let mut packeteer = rlbot.packeteer();
     loop {
         let packet_flat = packeteer.next_flatbuffer_without_timeout().unwrap();
@@ -201,22 +201,22 @@ fn create_collector() -> Collector {
     Collector::new(file)
 }
 
-struct FormulaNone<'a> {
+struct FormulaNone<'a, 'b> {
     rlbot: &'static rlbot::RLBot,
     field_info: rlbot::flat::FieldInfo<'a>,
     collector: Option<collect::Collector>,
     eeg: EEG,
-    brain: Brain,
+    brain: Brain<'b>,
     banner: Banner,
 }
 
-impl<'a> FormulaNone<'a> {
+impl<'a, 'b> FormulaNone<'a, 'b> {
     fn new(
         rlbot: &'static rlbot::RLBot,
         field_info: rlbot::flat::FieldInfo<'a>,
         collector: Option<collect::Collector>,
         eeg: brain::EEG,
-        brain: brain::Brain,
+        brain: brain::Brain<'b>,
     ) -> Self {
         Self {
             rlbot,

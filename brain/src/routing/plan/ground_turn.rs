@@ -20,6 +20,9 @@ use simulate::linear_interpolate;
 use std::f32::consts::PI;
 use vec_box::vec_box;
 
+#[cfg(target_family = "unix")]
+use crate::helpers::drive::max_curvature;
+
 const SLOWEST_TURNING_SPEED: f32 = 900.0;
 
 #[derive(Clone)]
@@ -179,8 +182,13 @@ impl RoutePlanner for SimpleTurnPlanner {
 
         let start = ctx.start.flatten(&Flattener::identity());
 
+        #[cfg(target_family = "windows")]
         let turn_radius =
             1.0 / chip::max_curvature(ctx.start.vel.norm().max(SLOWEST_TURNING_SPEED));
+
+        #[cfg(target_family = "unix")]
+        let turn_radius = 1.0 / max_curvature(ctx.start.vel.norm().max(SLOWEST_TURNING_SPEED));
+
         let turn = match calculate_circle_turn(&start, turn_radius, self.target_loc)? {
             Some(x) => x,
             None => {
@@ -234,8 +242,13 @@ impl RoutePlanner for ArcTowards {
 
         let start = ctx.start.flatten(&Flattener::identity());
 
+        #[cfg(target_family = "windows")]
         let turn_radius =
             1.0 / chip::max_curvature(ctx.start.vel.norm().max(SLOWEST_TURNING_SPEED));
+
+        #[cfg(target_family = "unix")]
+        let turn_radius = 1.0 / max_curvature(ctx.start.vel.norm().max(SLOWEST_TURNING_SPEED));
+
         let turn = match calculate_circle_turn(&start, turn_radius, self.target_loc)? {
             Some(x) => x,
             None => {

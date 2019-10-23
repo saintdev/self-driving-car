@@ -1,9 +1,12 @@
 use approx::{abs_diff_eq, AbsDiffEq};
-use common::{math::fractionality, prelude::*};
+use common::prelude::*;
 use euclid::{TypedPoint3D, TypedVector3D};
 use nalgebra::{Isometry3, Point2, Point3, Unit, UnitQuaternion, Vector2, Vector3};
 use plane_split::{Line as TypedLine, Plane as TypedPlane};
 use std::f32::consts::PI;
+
+#[cfg(target_family = "windows")]
+use common::math::fractionality;
 
 pub mod flattener;
 
@@ -29,7 +32,9 @@ impl ExtendF32 for f32 {
     }
 
     fn into_almost_int(self) -> i32 {
+        #[cfg(target_family = "windows")]
         assert!(fractionality(self) <= 1e-5);
+
         self.round() as i32
     }
 }

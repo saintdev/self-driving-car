@@ -294,6 +294,7 @@ fn build_quick_chat(
         quickChatSelection: selection,
         playerIndex: player_index,
         teamOnly: false,
+        ..Default::default()
     });
     builder.finish(root, None);
     builder

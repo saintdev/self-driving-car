@@ -26,13 +26,15 @@ plane-split = "0.13.3"
 piston_window = "0.89.0"
 piston2d-graphics = "0.30.0"
 
-rlbot = "0.4.1"
-chip = "0.0.6"
+rlbot = "0.6.0"
 
 common = { path = "../common" }
 collect = { path = "../collect" }
 dom = { path = "../dom" }
 simulate = { path = "../simulate" }
+
+[target.'cfg(windows)'.dependencies]
+chip = "0.0.6"
 
 [dev-dependencies]
 brain-test-data = { path = "../brain-test-data" }

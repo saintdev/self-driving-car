@@ -11,7 +11,10 @@ pub fn convert_quat_to_pyr(quat: &UnitQuaternion<f32>) -> (f32, f32, f32) {
 mod tests {
     use crate::{prelude::*, rotation};
     use lazy_static::lazy_static;
-    use nalgebra::{Rotation3, UnitQuaternion, Vector3};
+    use nalgebra::{Rotation3, UnitQuaternion};
+
+    #[cfg(target_family = "windows")]
+    use nalgebra::Vector3;
 
     const EPS: f32 = 0.05;
 
@@ -28,6 +31,7 @@ mod tests {
         ];
     }
 
+    #[cfg(target_family = "windows")]
     pub fn convert_pyr_to_quat((p, y, r): (f32, f32, f32)) -> UnitQuaternion<f32> {
         let mat = chip::euler_rotation(&Vector3::new(p, y, r));
         let coords = UnitQuaternion::from_rotation_matrix(&mat)
@@ -49,6 +53,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(target_family = "windows")]
     fn test_convert_pyr_to_quat() {
         for &(case_quat, (case_pitch, case_yaw, case_roll)) in &*CASES {
             println!("{:?}", case_quat);
@@ -85,6 +90,7 @@ mod tests {
 
     #[test]
     #[ignore = "I think chip's function is incorrect?"]
+    #[cfg(target_family = "windows")]
     fn chip_from_unreal_angles() {
         for &(_case_quat, (case_pitch, case_yaw, case_roll)) in &*CASES {
             println!("{:?} {:?} {:?}", case_pitch, case_yaw, case_roll);
@@ -98,6 +104,7 @@ mod tests {
 
     #[test]
     #[ignore = "I think chip's function is incorrect?"]
+    #[cfg(target_family = "windows")]
     fn chip_to_unreal_angles() {
         for &(_case_quat, (case_pitch, case_yaw, case_roll)) in &*CASES {
             println!("{:?} {:?} {:?}", case_pitch, case_yaw, case_roll);

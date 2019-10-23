@@ -2,7 +2,7 @@
 use crate::strategy::Behavior;
 use crate::{
     eeg::{color, Drawable, EEG},
-    helpers::ball::{BallPredictor, ChipBallPrediction, FrameworkBallPrediction},
+    helpers::ball::{BallPredictor, FrameworkBallPrediction},
     strategy::{infer_game_mode, Context, Dropshot, Game, Runner, Scenario, Soccar},
     utils::FPSCounter,
 };
@@ -11,9 +11,12 @@ use nalgebra::{clamp, Point3};
 use nameof::name_of_type;
 use std::time::Instant;
 
-pub struct Brain {
+#[cfg(target_family = "windows")]
+use crate::helpers::ball::ChipBallPrediction;
+
+pub struct Brain<'a> {
     runner: Runner,
-    ball_predictor: Box<dyn BallPredictor>,
+    ball_predictor: Box<dyn BallPredictor + 'a>,
     player_index: Option<i32>,
     fps_counter: FPSCounter,
     /// This is not automated or enforced in any way, it's just a convenient
@@ -21,8 +24,8 @@ pub struct Brain {
     last_quick_chat: f32,
 }
 
-impl Brain {
-    fn new(runner: Runner, ball_predictor: impl BallPredictor + 'static) -> Self {
+impl<'a> Brain<'a> {
+    fn new(runner: Runner, ball_predictor: impl BallPredictor + 'a) -> Self {
         Self {
             runner,
             ball_predictor: Box::new(ball_predictor),
@@ -37,18 +40,27 @@ impl Brain {
         infer_game_mode(field_info)
     }
 
-    pub fn soccar() -> Self {
+    #[cfg(target_family = "windows")]
+    pub fn soccar(_rlbot: &'a rlbot::RLBot) -> Self {
         Self::new(Runner::new(Soccar::new()), ChipBallPrediction::new())
     }
 
-    pub fn dropshot(rlbot: &'static rlbot::RLBot) -> Self {
+    #[cfg(target_family = "unix")]
+    pub fn soccar(rlbot: &'a rlbot::RLBot) -> Self {
+        Self::new(
+            Runner::new(Soccar::new()),
+            FrameworkBallPrediction::new(rlbot),
+        )
+    }
+
+    pub fn dropshot(rlbot: &'a rlbot::RLBot) -> Self {
         Self::new(
             Runner::new(Dropshot::new()),
             FrameworkBallPrediction::new(rlbot),
         )
     }
 
-    pub fn hoops(rlbot: &'static rlbot::RLBot) -> Self {
+    pub fn hoops(rlbot: &'a rlbot::RLBot) -> Self {
         Self::new(
             Runner::new(Soccar::new()),
             FrameworkBallPrediction::new(rlbot),
@@ -56,13 +68,23 @@ impl Brain {
     }
 
     #[cfg(test)]
-    pub fn with_behavior(behavior: impl Behavior + 'static) -> Self {
+    #[cfg(target_family = "windows")]
+    pub fn with_behavior(_rlbot: &'a rlbot::RLBot, behavior: impl Behavior + 'static) -> Self {
         Self::new(Runner::with_current(behavior), ChipBallPrediction::new())
     }
 
     #[cfg(test)]
+    #[cfg(target_family = "unix")]
+    pub fn with_behavior(rlbot: &'a rlbot::RLBot, behavior: impl Behavior + 'static) -> Self {
+        Self::new(
+            Runner::with_current(behavior),
+            FrameworkBallPrediction::new(rlbot),
+        )
+    }
+
+    #[cfg(test)]
     pub fn set_behavior(&mut self, behavior: impl Behavior + 'static, eeg: &mut EEG) {
-        eeg.log(name_of_type!(Brain), format!("! {}", behavior.name()));
+        eeg.log(name_of_type!(Brain<'_>), format!("! {}", behavior.name()));
         self.runner = Runner::with_current(behavior);
     }
 
@@ -129,7 +151,7 @@ impl Brain {
         // RL's physics runs at 120Hz, which leaves us ~8ms to make a decision.
         if calc_ms >= 8 {
             ctx.eeg.log(
-                name_of_type!(Brain),
+                name_of_type!(Brain<'_>),
                 format!("slow frame took {}ms", calc_ms),
             );
         }
