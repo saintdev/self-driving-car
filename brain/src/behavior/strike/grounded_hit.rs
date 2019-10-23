@@ -537,7 +537,8 @@ mod integration_tests {
 
         let packet = test.sniff_packet();
         assert!(packet.GameBall.Physics.vel().y > 1500.0);
-        // We don't score it yet. This test just makes sure we actually hit the ball lol
+        // We don't score it yet. This test just makes sure we actually hit the
+        // ball lol
         // assert!(test.has_scored());
     }
 }

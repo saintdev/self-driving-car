@@ -57,7 +57,8 @@ impl Behavior for Retreat {
 
         if Self::out_of_position(ctx) {
             choices.push(Box::new(PushToOwnCorner::new()));
-        // PushToOwnCorner might end up in RetreatingSave, so no need to duplicate.
+        // PushToOwnCorner might end up in RetreatingSave, so no need to
+        // duplicate.
         } else {
             choices.push(Box::new(RetreatingSave::new()));
         }
