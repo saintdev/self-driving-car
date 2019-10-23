@@ -137,7 +137,7 @@ impl Clone for Box<dyn RoutePlanner> {
     }
 }
 
-pub struct PlanningContext<'a: 's, 's> {
+pub struct PlanningContext<'a, 's> {
     pub game: &'s Game<'a>,
     pub start: CarState,
     pub ball_prediction: &'s BallTrajectory,
@@ -414,6 +414,7 @@ mod tests {
 
     #[test]
     #[ignore = "Use this as needed to debug a plan."]
+    #[allow(invalid_value)]
     fn debug_plan() {
         // I'm very lucky that this works.
         let scenario: Scenario<'_> = unsafe { mem::zeroed() };
